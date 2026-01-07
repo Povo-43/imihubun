@@ -122,6 +122,18 @@
         footer a:hover {
             border-bottom: 1px solid var(--secondary-text);
         }
+
+        .btn-copy {
+    background-color: var(--secondary-btn);
+    color: var(--text-color);
+}
+
+/* コピー完了時にボタンを少し光らせる演出（任意） */
+.copy-success {
+    background-color: #28a745 !important;
+    color: white !important;
+}
+
     </style>
 </head>
 <body>
@@ -135,6 +147,12 @@
     
     <div class="button-group">
         <button class="btn-generate" onclick="generate()">文を変える</button>
+        <div class="button-group">
+    <button class="btn-generate" onclick="generate()">文を変える</button>
+    <button class="btn-copy" onclick="copyText()" id="copy-btn">コピー</button>
+    <button class="btn-share" onclick="share()">共有する</button>
+</div>
+
         <button class="btn-share" onclick="share()">共有する</button>
     </div>
 </div>
