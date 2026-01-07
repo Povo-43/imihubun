@@ -203,6 +203,28 @@
     
         document.getElementById('text-display').innerText = finalResult;
     }
+// クリップボードにコピーする関数
+async function copyText() {
+    const text = document.getElementById('text-display').innerText;
+    const btn = document.getElementById('copy-btn');
+    const originalText = btn.innerText;
+
+    try {
+        await navigator.clipboard.writeText(text);
+        
+        // 見た目のフィードバック
+        btn.innerText = "完了！";
+        btn.classList.add('copy-success');
+        
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.classList.remove('copy-success');
+        }, 1500); // 1.5秒後に元に戻す
+    } catch (err) {
+        console.error('コピーに失敗しました', err);
+        alert("コピーできませんでした。");
+    }
+}
 
 
     // 共有機能
