@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>意味不短文ジェネレーター</title>
+    <meta property="og:title" content="意味不明短文ジェネレーター">
+    <meta property="og:description" content="はい。布団は水筒で窓枠を学習します。ええ、それは本当です。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://povo-43.github.io/imihubun">
+    <meta property="og:image" content="https://kotoca.net/bg.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="意味不明短文ジェネレーター">
+    <meta name="twitter:description" content="自動生成されるカオスな文章を楽しみましょう。">
+    <meta name="twitter:image" content="https://kotoca.net/bg.png">
+
+    <style>
+        :root {
+            /* ダークテーマ (既定) */
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --accent-color: #0a84ff;
+            --secondary-btn: #333;
+            --secondary-text: #888;
+        }
+
+        [data-theme="light"] {
+            /* ライトテーマ */
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --accent-color: #007aff;
+            --secondary-btn: #eee;
+            --secondary-text: #666;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s ease;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            padding: 40px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: background-color 0.3s ease;
+        }
+
+        #text-display {
+            font-size: 1.4rem;
+            line-height: 1.7;
+            min-height: 140px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s, background-color 0.3s;
+        }
+
+        .btn-generate {
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        .btn-share, .btn-theme {
+            background-color: var(--secondary-btn);
+            color: var(--text-color);
+        }
+
+        button:active { transform: scale(0.96); }
+        button:hover { opacity: 0.9; }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--secondary-text);
+        }
+
+        footer a {
+            color: var(--secondary-text);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+        }
+
+        footer a:hover {
+            border-bottom: 1px solid var(--secondary-text);
+        }
+    </style>
+</head>
+<body>
+
+<div class="theme-toggle">
+    <button class="btn-theme" onclick="toggleTheme()" id="theme-btn">☀️ Mode</button>
+</div>
+
+<div class="container">
+    <div id="text-display">読み込み中...</div>
+    
+    <div class="button-group">
+        <button class="btn-generate" onclick="generate()">文を変える</button>
+        <button class="btn-share" onclick="share()">共有する</button>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2026 <a href="https://github.com/TeamKOTOCA" target="_blank" rel="noopener noreferrer">Povo43</a></p>
+</footer>
+
+<script>
+    let wordData = null;
+
+    // テーマ切り替え
+    function toggleTheme() {
+        const body = document.documentElement;
+        const btn = document.getElementById('theme-btn');
+        if (body.getAttribute('data-theme') === 'light') {
+            body.removeAttribute('data-theme');
+            btn.innerText = "☀️ Mode";
+        } else {
+            body.setAttribute('data-theme', 'light');
+            btn.innerText = "🌙 Mode";
+        }
+    }
+
+    // データの読み込み
+    async function loadWords() {
+        try {
+            const response = await fetch('words.json');
+            wordData = await response.json();
+            generate(); 
+        } catch (error) {
+            document.getElementById('text-display').innerText = "words.jsonの読み込みに失敗しました。";
+        }
+    }
+
+    // 文の生成
+    function generate() {
+        if (!wordData) return;
+        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        
+        const makeSentence = () => {
+            return pick(wordData.starts) + pick(wordData.subjects) + 
+                   pick(wordData.locations) + pick(wordData.actions) + " " + pick(wordData.ends);
+        };
+    
+        // 50%の確率で2文つなげる
+        const finalResult = Math.random() > 0.5 ? makeSentence() + " " + makeSentence() : makeSentence();
+    
+        document.getElementById('text-display').innerText = finalResult;
+    }
+
+
+    // 共有機能
+    function share() {
+        const text = document.getElementById('text-display').innerText;
+        const url = window.location.href;
+        if (navigator.share) {
+            navigator.share({ title: '意味不明な文', text: text, url: url });
+        } else {
+            const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}#意味不明文ジェネレータ&url=${encodeURIComponent(url)}`;
+            window.open(twitterUrl, '_blank');
+        }
+    }
+
+    loadWords();
+</script>
+
+</body>
+</html>
