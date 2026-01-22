@@ -269,10 +269,11 @@ footer {
             window.open(twitterUrl, '_blank');
         }
     }
-    document.addEventListener('keydown', (event) {
-      if (event.key === ' ') {
+    document.addEventListener('keydown', (event) => {
+      if (event.code === 'Space') {
+          event.preventDefault();
           generate();
-      }
+        }
     });
 
     loadWords();
