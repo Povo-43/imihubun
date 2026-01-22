@@ -269,6 +269,11 @@ footer {
             window.open(twitterUrl, '_blank');
         }
     }
+    document.addEventListener('keydown', (event) {
+      if (event.key === ' ') {
+          generate();
+      }
+    });
 
     loadWords();
 </script>
