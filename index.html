@@ -261,7 +261,7 @@ footer {
         const text = document.getElementById('text-display').innerText;
         const url = window.location.href;
         if (navigator.share) {
-            navigator.share({ title: '意味不明な文', text: text, url: url });
+            navigator.share({ title: '意味不短文ジェネレーター', text: text, url: url });
         } else {
             const twitterUrl =
               `https://twitter.com/intent/tweet?text=${encodeURIComponent(text + " #意味不明文ジェネレータ")}&url=${encodeURIComponent(url)}`;
