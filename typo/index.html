@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>意味不短文 グリッド詰め</title>
+<title>意味不短文 グリッド（一マス一文字）</title>
 
 <style>
 html, body {
@@ -23,17 +23,16 @@ html, body {
   height: 100vh;
 }
 
-/* グリッド単位のブロック */
+/* 1マス = 1文字 */
 .block {
   position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
 
-  text-align: center;
-  line-height: 1.5;
-  letter-spacing: 0.05em;
+  line-height: 1;
   overflow: hidden;
+  user-select: none;
 
   transition: opacity 0.4s ease;
 }
@@ -46,16 +45,16 @@ html, body {
 <script>
 /* ===== 設定 ===== */
 
-const CELL = 16; // 1グリッドのpx（小さくするほど密）
-const BLOCK_SIZES = [4, 2, 1]; // 優先サイズ
+const CELL = 16;        // 1文字1マスのpx
 const LIFETIME = 6000; // ms
+const TICK_MS = 40;
 
 const stage = document.getElementById("stage");
 
 /* ===== グリッド管理 ===== */
 
 let cols, rows;
-let grid = []; // true = 使用中
+let grid = [];
 
 function initGrid() {
   cols = Math.floor(window.innerWidth / CELL);
@@ -66,37 +65,24 @@ function initGrid() {
   stage.innerHTML = "";
 }
 
-function canPlace(x, y, size) {
-  if (x + size > cols || y + size > rows) return false;
-  for (let dy = 0; dy < size; dy++) {
-    for (let dx = 0; dx < size; dx++) {
-      if (grid[y + dy][x + dx]) return false;
-    }
-  }
-  return true;
+function occupy(x, y, el) {
+  grid[y][x] = el;
 }
 
-function occupy(x, y, size, block) {
-  for (let dy = 0; dy < size; dy++) {
-    for (let dx = 0; dx < size; dx++) {
-      grid[y + dy][x + dx] = block;
-    }
-  }
-}
-
-function release(block) {
+function release(el) {
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
-      if (grid[y][x] === block) {
+      if (grid[y][x] === el) {
         grid[y][x] = null;
       }
     }
   }
 }
 
-/* ===== 生成ロジック（流用） ===== */
+/* ===== 単語生成 ===== */
 
 let wordData = null;
+let charQueue = [];
 
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
@@ -114,28 +100,26 @@ function generateSentence() {
     : s;
 }
 
-/* ===== 配置 ===== */
+function refillQueue() {
+  const sentence = generateSentence();
+  charQueue.push(...sentence.split(""));
+}
 
-function createBlock(size, gx, gy) {
+/* ===== 1文字配置 ===== */
+
+function createCharBlock(ch, gx, gy) {
   const el = document.createElement("div");
   el.className = "block";
-  el.textContent = generateSentence();
+  el.textContent = ch;
 
-  const vertical = Math.random() < 0.3;
-  el.style.writingMode = vertical ? "vertical-rl" : "horizontal-tb";
-
-  const px = size * CELL;
-  el.style.width = px + "px";
-  el.style.height = px + "px";
+  el.style.width  = CELL + "px";
+  el.style.height = CELL + "px";
   el.style.left = gx * CELL + "px";
-  el.style.top = gy * CELL + "px";
-
-  el.style.fontSize =
-    (size <= 1 ? 0.6 :
-     size === 2 ? 0.9 : 1.2) + "rem";
+  el.style.top  = gy * CELL + "px";
+  el.style.fontSize = "0.75rem";
 
   stage.appendChild(el);
-  occupy(gx, gy, size, el);
+  occupy(gx, gy, el);
 
   setTimeout(() => {
     el.style.opacity = "0";
@@ -149,16 +133,20 @@ function createBlock(size, gx, gy) {
 /* ===== メインループ ===== */
 
 function tick() {
+  if (!wordData) return;
+
+  if (charQueue.length === 0) {
+    refillQueue();
+  }
+
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
       if (grid[y][x]) continue;
 
-      for (const size of BLOCK_SIZES) {
-        if (canPlace(x, y, size)) {
-          createBlock(size, x, y);
-          return;
-        }
-      }
+      const ch = charQueue.shift();
+      if (!ch) return;
+
+      createCharBlock(ch, x, y);
       return;
     }
   }
@@ -169,13 +157,12 @@ function tick() {
 async function start() {
   const res = await fetch("../words.json");
   wordData = await res.json();
+
   initGrid();
-  setInterval(tick, 120);
+  setInterval(tick, TICK_MS);
 }
 
-window.addEventListener("resize", () => {
-  initGrid();
-});
+window.addEventListener("resize", initGrid);
 
 start();
 </script>
