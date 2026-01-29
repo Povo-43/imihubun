@@ -167,7 +167,7 @@ function tick() {
 /* ===== 起動 ===== */
 
 async function start() {
-  const res = await fetch("words.json");
+  const res = await fetch("../words.json");
   wordData = await res.json();
   initGrid();
   setInterval(tick, 120);
