@@ -219,19 +219,32 @@ footer {
 
     // 文の生成
     function generate() {
-        if (!wordData) return;
-        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-        
-        const makeSentence = () => {
-            return pick(wordData.starts) + pick(wordData.subjects) + 
-                   pick(wordData.locations) + pick(wordData.actions) + " " + pick(wordData.ends);
-        };
+      if (!wordData) return;
     
-        // 50%の確率で2文つなげる
-        const finalResult = Math.random() > 0.5 ? makeSentence() + " " + makeSentence() : makeSentence();
+      const structure = pick(wordData.structures);
+      const sentence = renderStructure(structure);
     
-        document.getElementById('text-display').innerText = finalResult;
+      // 低確率で2文
+      const finalResult =
+        Math.random() < 0.4
+          ? sentence + " " + renderStructure(pick(wordData.structures))
+          : sentence;
+    
+      document.getElementById('text-display').innerText = finalResult;
     }
+
+    
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    
+    function renderStructure(template) {
+      return template.replace(/\{(\w+)\}/g, (_, key) => {
+        const pool = wordData[key + "s"] || wordData[key];
+        if (!pool) return "";
+        return pick(pool);
+      });
+    }
+
+    
     // クリップボードにコピーする関数
     async function copyText() {
         const text = document.getElementById('text-display').innerText;
