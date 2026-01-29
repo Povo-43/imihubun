@@ -1,4 +1,11 @@
 {
+  "structures": [
+    "{start}{subject}{location}{action}{end}",
+    "{subject}は{location}{action}{end}",
+    "なぜなら、{subject}が{action}{end}",
+    "{start}{subject}{action}{end} しかし、{subject}{location}{action}{end}",
+    "{subject}とは、{subject}が{action}という現象です{end}"
+  ],
   "starts": [
     "案の定、", "蓋を開けてみれば、", "あいにくですが、", "何を隠そう、", "多かれ少なかれ、", "100歩譲って、", "世の常として、", "まるで示し合わせたかのように、", "不謹慎ながら、", "義務教育では教わりませんが、",
     "万が一、", "周知の事実として、", "言葉を選ばずに言えば、", "驚くべきことに、", "一見すると、", "冷静な判断に基づけば、", "太古の昔から、", "現代科学の限界により、", "気のせいか、", "ある晴れた日のこと、",
