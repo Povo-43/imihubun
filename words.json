@@ -1,11 +1,60 @@
 {
-  "structures": [
-    "{start}{subject}{location}{action}{end}",
-    "{subject}は{location}{action}{end}",
-    "なぜなら、{subject}が{action}{end}",
-    "{start}{subject}{action}{end} しかし、{subject}{location}{action}{end}",
-    "{subject}とは、{subject}が{action}という現象です{end}"
-  ],
+    "structures":[
+      "{start}{subject}{action}{end}",
+      "{start}{subject}{location}{action}{end}",
+      "{subject}{action}{end}",
+      "{subject}{location}{action}{end}",
+    
+      "{start}{subject}{action}{end}{subject}{action}{end}",
+      "{start}{subject}{location}{action}{end}{subject}{action}{end}",
+      "{subject}{action}{end}{subject}{location}{action}{end}",
+      "{subject}{location}{action}{end}{subject}{action}{end}",
+    
+      "{start}{subject}{action}{end}{start}{subject}{action}{end}",
+      "{start}{subject}{location}{action}{end}{start}{subject}{action}{end}",
+      "{start}{subject}{action}{end}{start}{subject}{location}{action}{end}",
+    
+      "{subject}{action}{end}{subject}{action}{end}",
+      "{subject}{location}{action}{end}{subject}{location}{action}{end}",
+      "{subject}{action}{end}{subject}{location}{action}{end}",
+    
+      "{start}{subject}{action}{end}{subject}{action}",
+      "{start}{subject}{location}{action}{end}{subject}{action}",
+      "{subject}{action}{end}{subject}{action}",
+      "{subject}{location}{action}{end}{subject}{action}",
+    
+      "{start}{subject}{action}{end}{subject}{location}{action}",
+      "{subject}{action}{end}{subject}{location}{action}",
+    
+      "{start}{subject}{action}{subject}{action}{end}",
+      "{start}{subject}{location}{action}{subject}{action}{end}",
+      "{subject}{action}{subject}{action}{end}",
+      "{subject}{location}{action}{subject}{action}{end}",
+    
+      "{start}{subject}{action}{end}{location}{action}",
+      "{subject}{action}{end}{location}{action}",
+    
+      "{start}{subject}{location}{action}{end}{location}{action}{end}",
+      "{subject}{location}{action}{end}{location}{action}{end}",
+    
+      "{start}{subject}{action}{end}{start}{subject}{action}",
+      "{subject}{action}{end}{start}{subject}{action}",
+    
+      "{start}{subject}{location}{action}{end}{start}{subject}{location}{action}",
+      "{subject}{location}{action}{end}{start}{subject}{location}{action}",
+    
+      "{start}{subject}{action}{end}{subject}",
+      "{subject}{action}{end}{subject}",
+    
+      "{start}{subject}{location}{action}{end}{subject}",
+      "{subject}{location}{action}{end}{subject}",
+    
+      "{start}{subject}{action}{location}{action}{end}",
+      "{subject}{action}{location}{action}{end}",
+    
+      "{start}{subject}{location}{action}{subject}{action}{end}",
+      "{subject}{location}{action}{subject}{action}{end}"
+    ],
   "starts": [
     "案の定、", "蓋を開けてみれば、", "あいにくですが、", "何を隠そう、", "多かれ少なかれ、", "100歩譲って、", "世の常として、", "まるで示し合わせたかのように、", "不謹慎ながら、", "義務教育では教わりませんが、",
     "万が一、", "周知の事実として、", "言葉を選ばずに言えば、", "驚くべきことに、", "一見すると、", "冷静な判断に基づけば、", "太古の昔から、", "現代科学の限界により、", "気のせいか、", "ある晴れた日のこと、",
@@ -21,8 +70,6 @@
     "感情論を抜きにして、", "理性的に判断すると、", "状況証拠的には、", "仮にそうだとしても、", "安全策を取るなら、","論点を絞ると、", "話を簡略化すると、", "見逃されがちですが、", "言及しておくと、", "立場上、",
     "可能性としては、", "建前としては、", "理想論を言えば、", "現場感覚では、", "思考停止せずに言うと、","慣れた目で見ると、", "流儀としては、", "現実的な線では、", "抽象化すると、", "前置きが長いですが、",
     "無理を承知で言えば、", "確率の話ですが、", "議論の余地はありますが、", "余白を残すなら、", "常套句ですが、"
-
-
   ],
   "subjects": [
     "ポテトチップスの袋は", "QRコードは", "自動ドアは", "耳たぶは", "クリップの針金は", "タピオカは", "スマートスピーカーは", "鼻歌は", "洗濯バサミは", "セミの抜け殻は",
