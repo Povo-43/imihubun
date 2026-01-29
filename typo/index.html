@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>意味不短文 フロー組版</title>
+
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0b0d12;
+  color: #e8e6df;
+  font-family: 'Shippori Mincho', 'Noto Serif JP', serif;
+}
+
+#stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* 文章ブロック */
+.block {
+  position: absolute;
+  white-space: normal;     /* 折り返しOK */
+  line-height: 1.6;
+  letter-spacing: 0.05em;
+  margin: 0;
+  padding: 0;
+}
+</style>
+</head>
+
+<body>
+<div id="stage"></div>
+
+<script>
+const stage = document.getElementById("stage");
+let wordData = null;
+
+/* ====== 既存生成ロジック ====== */
+
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+function renderStructure(template) {
+  return template.replace(/\{(\w+)\}/g, (_, key) => {
+    const pool = wordData[key + "s"] || wordData[key];
+    return pool ? pick(pool) : "";
+  });
+}
+
+function generateSentence() {
+  const base = renderStructure(pick(wordData.structures));
+  return Math.random() < 0.4
+    ? base + " " + renderStructure(pick(wordData.structures))
+    : base;
+}
+
+/* ====== レイアウトエンジン ====== */
+
+let cursorX = 0;
+let cursorY = 0;
+let currentLineHeight = 0;
+const lines = []; // 行管理（削除用）
+
+function createBlock() {
+  const el = document.createElement("div");
+  el.className = "block";
+  el.textContent = generateSentence();
+
+  // ランダムサイズ
+  el.style.fontSize = (Math.random() * 0.8 + 0.9) + "rem";
+
+  // 縦横混在
+  const vertical = Math.random() < 0.3;
+  el.style.writingMode = vertical ? "vertical-rl" : "horizontal-tb";
+
+  el.style.visibility = "hidden";
+  stage.appendChild(el);
+  return el;
+}
+
+function placeBlock(el) {
+  const rect = el.getBoundingClientRect();
+
+  // 横に入らなければ改行
+  if (cursorX + rect.width > window.innerWidth) {
+    newLine();
+  }
+
+  // 縦がはみ出るなら追加停止
+  if (cursorY + rect.height > window.innerHeight) {
+    el.remove();
+    return false;
+  }
+
+  el.style.left = cursorX + "px";
+  el.style.top = cursorY + "px";
+  el.style.visibility = "visible";
+
+  cursorX += rect.width;
+  currentLineHeight = Math.max(currentLineHeight, rect.height);
+
+  // 行情報更新
+  if (!lines.at(-1)) {
+    lines.push({ y: cursorY, height: rect.height, elements: [el] });
+  } else {
+    lines.at(-1).height = Math.max(lines.at(-1).height, rect.height);
+    lines.at(-1).elements.push(el);
+  }
+
+  return true;
+}
+
+function newLine() {
+  cursorX = 0;
+  cursorY += currentLineHeight;
+  currentLineHeight = 0;
+  lines.push(null); // 行区切り
+}
+
+function cleanupOverflow() {
+  while (lines.length && cursorY > window.innerHeight) {
+    const line = lines.shift();
+    if (!line) continue;
+
+    line.elements.forEach(el => el.remove());
+    cursorY -= line.height;
+  }
+}
+
+/* ====== ループ ====== */
+
+function tick() {
+  const el = createBlock();
+  if (placeBlock(el)) {
+    cleanupOverflow();
+  }
+}
+
+/* ====== 初期化 ====== */
+
+async function loadWords() {
+  const res = await fetch("words.json");
+  wordData = await res.json();
+
+  // 初期行
+  lines.push(null);
+
+  setInterval(tick, 180);
+}
+
+window.addEventListener("resize", () => {
+  stage.innerHTML = "";
+  cursorX = 0;
+  cursorY = 0;
+  currentLineHeight = 0;
+  lines.length = 0;
+  lines.push(null);
+});
+
+loadWords();
+</script>
+</body>
+</html>
