@@ -39,12 +39,12 @@ html, body {
 <div id="stage"></div>
 
 <script>
-/* ===== 基本設定 ===== */
+  /* ===== 基本設定 ===== */
 
-const CELL = 16;                 // 最小論理グリッド16
-const SIZES = [1, 2, 4];         // 占有セル倍率
+const CELL = 16;
+const SIZES = [1, 2, 4];
 const LIFETIME = 7000;
-const TICK = 40;
+const TICK = 10;
 
 const stage = document.getElementById("stage");
 
@@ -87,6 +87,15 @@ function release(el) {
   }
 }
 
+function hasEmptyCell() {
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      if (!grid[y][x]) return true;
+    }
+  }
+  return false;
+}
+
 /* ===== 単語生成 ===== */
 
 let wordData;
@@ -124,7 +133,6 @@ function createChar(ch, gx, gy, size) {
   el.style.height = px + "px";
   el.style.left   = gx * CELL + "px";
   el.style.top    = gy * CELL + "px";
-
   el.style.fontSize = (px * 0.85) + "px";
 
   const vertical = Math.random() < 0.35;
@@ -142,10 +150,10 @@ function createChar(ch, gx, gy, size) {
   }, LIFETIME);
 }
 
-/* ===== メインループ ===== */
+/* ===== 1ステップ描画 ===== */
 
-function tick() {
-  if (!wordData) return;
+function tickOnce() {
+  if (!wordData) return false;
 
   if (charQueue.length === 0) refillChars();
 
@@ -154,17 +162,33 @@ function tick() {
       if (grid[y][x]) continue;
 
       const ch = charQueue.shift();
-      if (!ch) return;
+      if (!ch) return false;
 
       for (const s of SIZES.sort(() => Math.random() - 0.5)) {
         if (canPlace(x, y, s)) {
           createChar(ch, x, y, s);
-          return;
+          return true;
         }
       }
-      return;
+      return false;
     }
   }
+  return false;
+}
+
+/* ===== 初期高速充填 ===== */
+
+function fastFillInitial() {
+  let guard = cols * rows * 2;
+  while (hasEmptyCell() && guard-- > 0) {
+    tickOnce();
+  }
+}
+
+/* ===== 通常ループ ===== */
+
+function tick() {
+  tickOnce();
 }
 
 /* ===== 起動 ===== */
@@ -172,12 +196,19 @@ function tick() {
 async function start() {
   const res = await fetch("../words.json");
   wordData = await res.json();
+
   initGrid();
+
+  // 初期のみ高速で全画面充填
+  fastFillInitial();
+
+  // 通常速度に移行
   setInterval(tick, TICK);
 }
 
 addEventListener("resize", initGrid);
 start();
+
 </script>
 </body>
 </html>
