@@ -43,7 +43,7 @@ html, body {
 #overlay {
   position: fixed;
   inset: 0;
-  background: rgba(11, 13, 18, 0.85);
+  background: #00000050;
   backdrop-filter: blur(4px);
   align-items: center;
   justify-content: center;
@@ -59,7 +59,7 @@ html, body {
 #overlay button {
   margin: 8px;
   padding: 6px 14px;
-  background: #1a1d26;
+  background: #0000006d;
   color: #e8e6df;
   border: 1px solid #333;
 }
@@ -92,7 +92,7 @@ html, body {
 
 const CELL = 16;
 const SIZES = [1, 1, 2, 2, 4, 4, 8];
-const LIFETIME = 7000;
+const LIFETIME = 50;
 const TICK = 10;
 
 /* =========================
@@ -118,6 +118,8 @@ let charQueue = [];
 
 let running = true;
 let timerId = null;
+
+let hasReachedBottom = false;
 
 /* =========================
  * ユーティリティ
@@ -196,11 +198,11 @@ function refillCharQueue() {
 /* =========================
  * 文字生成
  * ========================= */
-
 function createChar(ch, gx, gy, size) {
   const el = document.createElement("div");
   el.className = "char";
   el.textContent = ch;
+  el._size = size;
 
   const px = size * CELL;
   el.style.width = px + "px";
@@ -211,21 +213,53 @@ function createChar(ch, gx, gy, size) {
   el.style.writingMode =
     Math.random() < 0.35 ? "vertical-rl" : "horizontal-tb";
 
+  el._expired = false;
+
   stage.appendChild(el);
   occupy(gx, gy, size, el);
 
+  const lifetime = LIFETIME * (0.8 + 0.2 * Math.sqrt(size));
+
   setTimeout(() => {
-    el.style.opacity = "0";
-    setTimeout(() => {
-      release(el);
-      el.remove();
-    }, 400);
-  }, LIFETIME);
+    el._expired = true;
+  }, lifetime);
+}
+function collectCluster(x, y, radius = 2) {
+  const set = new Set();
+
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const ny = y + dy;
+      const nx = x + dx;
+      if (ny < 0 || nx < 0 || ny >= rows || nx >= cols) continue;
+
+      const el = grid[ny][nx];
+      if (el && el._expired) {
+        set.add(el);
+      }
+    }
+  }
+  return [...set];
 }
 
 /* =========================
  * 1ステップ描画
  * ========================= */
+function pickSize(x, y) {
+  const candidates = SIZES.filter(s => canPlace(x, y, s));
+  if (candidates.length === 0) return null;
+
+  // 大きいサイズほど選ばれやすくする
+  const weights = candidates.map(s => Math.sqrt(s));
+  const sum = weights.reduce((a, b) => a + b, 0);
+
+  let r = Math.random() * sum;
+  for (let i = 0; i < candidates.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return candidates[i];
+  }
+  return candidates[candidates.length - 1];
+}
 
 function tickOnce() {
   if (!wordData) return false;
@@ -241,10 +275,20 @@ function tickOnce() {
       const ch = charQueue.shift();
       if (!ch) return false;
 
-      const sizes = [...SIZES].sort(() => Math.random() - 0.5);
+      const size = pickSize(x, y);
+      if (size) {
+        createChar(ch, x, y, size);
+        return true;
+      }
+
       for (const size of sizes) {
         if (canPlace(x, y, size)) {
           createChar(ch, x, y, size);
+
+          if (!hasReachedBottom && size === 1 && y === rows - 1) {
+            hasReachedBottom = true;
+          }
+
           return true;
         }
       }
@@ -259,19 +303,64 @@ function tickOnce() {
  * ========================= */
 
 function fastFillInitial() {
-  let guard = cols * rows * 2;
-  while (hasEmptyCell() && guard-- > 0) {
-    tickOnce();
+  running = false;
+
+  let delay = 80;
+
+  function step() {
+    if (!hasEmptyCell() || !tickOnce()) {
+      running = true;
+      return;
+    }
+
+    delay = Math.max(10, delay * 0.97);
+    setTimeout(step, delay);
   }
+
+  step();
 }
+
 
 /* =========================
  * ループ制御
  * ========================= */
+function removeChar(el) {
+  el._expired = false;
+  el.style.opacity = "0";
+  setTimeout(() => {
+    release(el);
+    el.remove();
+  }, 400);
+}
 
 function tick() {
   if (!running) return;
+
   tickOnce();
+
+  if (!hasEmptyCell()) {
+    const expired = [...document.querySelectorAll(".char")]
+      .filter(el => el._expired);
+
+    // 何も消せないなら何もしない
+    if (expired.length === 0) return;
+
+    // 上位 N 個を消す
+    const REMOVE_COUNT = 3; // ← ここ調整ポイント
+    for (let i = 0; i < Math.min(REMOVE_COUNT, expired.length); i++) {
+      const el = expired[i];
+      if (el._size === 1) {
+        const gx = Math.round(parseInt(el.style.left) / CELL);
+        const gy = Math.round(parseInt(el.style.top) / CELL);
+
+        const cluster = collectCluster(gx, gy, 2); // 約4×4
+        cluster.forEach(removeChar);
+      } else {
+        removeChar(el);
+      }
+
+    }
+  }
 }
 
 function startLoop() {
@@ -295,6 +384,7 @@ function resume() {
 
 function resetAll() {
   running = false;
+  hasReachedBottom = false;
   initGrid();
   charQueue.length = 0;
   fastFillInitial();
