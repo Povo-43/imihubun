@@ -385,6 +385,12 @@ shareBtn.addEventListener("click", e => {
     window.open(xUrl, "_blank", "noopener");
   }
 });
+addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (overlay.hidden) return;
+
+  resume();
+});
 
 /* =========================
  * 起動
