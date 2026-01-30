@@ -32,14 +32,47 @@ html, body {
   user-select: none;
   transition: opacity 0.4s linear;
 }
+
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 13, 18, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+#overlay .menu {
+  text-align: center;
+}
+
+#overlay button {
+  margin: 8px;
+  padding: 6px 14px;
+  background: #1a1d26;
+  color: #e8e6df;
+  border: 1px solid #333;
+}
 </style>
 </head>
 
 <body>
 <div id="stage"></div>
 
+<div id="overlay" hidden>
+  <div class="menu">
+    <h2>Menu</h2>
+    <button id="resume">再開</button>
+    <button id="reset">リセット</button>
+  </div>
+</div>
+
 <script>
-  /* ===== 基本設定 ===== */
+/* =========================
+ * 基本設定
+ * ========================= */
 
 const CELL = 16;
 const SIZES = [1, 2, 4, 8];
@@ -48,32 +81,35 @@ const TICK = 10;
 
 const stage = document.getElementById("stage");
 
-/* ===== グリッド ===== */
+/* =========================
+ * グリッド管理
+ * ========================= */
 
-let cols, rows, grid;
+let cols = 0;
+let rows = 0;
+let grid = [];
 
 function initGrid() {
   cols = Math.floor(innerWidth / CELL);
   rows = Math.floor(innerHeight / CELL);
-  grid = Array.from({ length: rows }, () =>
-    Array(cols).fill(null)
-  );
+  grid = Array.from({ length: rows }, () => Array(cols).fill(null));
   stage.innerHTML = "";
 }
 
-function canPlace(x, y, s) {
-  if (x + s > cols || y + s > rows) return false;
-  for (let dy = 0; dy < s; dy++) {
-    for (let dx = 0; dx < s; dx++) {
+function canPlace(x, y, size) {
+  if (x + size > cols || y + size > rows) return false;
+
+  for (let dy = 0; dy < size; dy++) {
+    for (let dx = 0; dx < size; dx++) {
       if (grid[y + dy][x + dx]) return false;
     }
   }
   return true;
 }
 
-function occupy(x, y, s, el) {
-  for (let dy = 0; dy < s; dy++) {
-    for (let dx = 0; dx < s; dx++) {
+function occupy(x, y, size, el) {
+  for (let dy = 0; dy < size; dy++) {
+    for (let dx = 0; dx < size; dx++) {
       grid[y + dy][x + dx] = el;
     }
   }
@@ -96,47 +132,52 @@ function hasEmptyCell() {
   return false;
 }
 
-/* ===== 単語生成 ===== */
+/* =========================
+ * 単語生成
+ * ========================= */
 
-let wordData;
+let wordData = null;
 let charQueue = [];
 
-const pick = a => a[Math.floor(Math.random() * a.length)];
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
-function renderStructure(t) {
-  return t.replace(/\{(\w+)\}/g, (_, k) => {
-    const p = wordData[k + "s"] || wordData[k];
-    return p ? pick(p) : "";
+function renderStructure(template) {
+  return template.replace(/\{(\w+)\}/g, (_, key) => {
+    const pool = wordData[key + "s"] || wordData[key];
+    return pool ? pick(pool) : "";
   });
 }
 
 function generateSentence() {
-  const s = renderStructure(pick(wordData.structures));
-  return Math.random() < 0.5
-    ? s + " " + renderStructure(pick(wordData.structures))
-    : s;
+  const base = renderStructure(pick(wordData.structures));
+  if (Math.random() < 0.5) {
+    return base + " " + renderStructure(pick(wordData.structures));
+  }
+  return base;
 }
 
-function refillChars() {
+function refillCharQueue() {
   charQueue.push(...generateSentence().split(""));
 }
 
-/* ===== 文字生成 ===== */
+/* =========================
+ * 文字生成
+ * ========================= */
 
-function createChar(ch, gx, gy, size) {
+function createCharElement(ch, gx, gy, size) {
   const el = document.createElement("div");
   el.className = "char";
   el.textContent = ch;
 
   const px = size * CELL;
-  el.style.width  = px + "px";
-  el.style.height = px + "px";
-  el.style.left   = gx * CELL + "px";
-  el.style.top    = gy * CELL + "px";
-  el.style.fontSize = (px * 0.85) + "px";
 
-  const vertical = Math.random() < 0.35;
-  el.style.writingMode = vertical ? "vertical-rl" : "horizontal-tb";
+  el.style.width = px + "px";
+  el.style.height = px + "px";
+  el.style.left = gx * CELL + "px";
+  el.style.top = gy * CELL + "px";
+  el.style.fontSize = px * 0.85 + "px";
+  el.style.writingMode =
+    Math.random() < 0.35 ? "vertical-rl" : "horizontal-tb";
 
   stage.appendChild(el);
   occupy(gx, gy, size, el);
@@ -150,12 +191,16 @@ function createChar(ch, gx, gy, size) {
   }, LIFETIME);
 }
 
-/* ===== 1ステップ描画 ===== */
+/* =========================
+ * 1ステップ描画
+ * ========================= */
 
 function tickOnce() {
   if (!wordData) return false;
 
-  if (charQueue.length === 0) refillChars();
+  if (charQueue.length === 0) {
+    refillCharQueue();
+  }
 
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
@@ -164,9 +209,10 @@ function tickOnce() {
       const ch = charQueue.shift();
       if (!ch) return false;
 
-      for (const s of SIZES.sort(() => Math.random() - 0.5)) {
-        if (canPlace(x, y, s)) {
-          createChar(ch, x, y, s);
+      const sizes = [...SIZES].sort(() => Math.random() - 0.5);
+      for (const size of sizes) {
+        if (canPlace(x, y, size)) {
+          createCharElement(ch, x, y, size);
           return true;
         }
       }
@@ -176,7 +222,9 @@ function tickOnce() {
   return false;
 }
 
-/* ===== 初期高速充填 ===== */
+/* =========================
+ * 初期高速充填
+ * ========================= */
 
 function fastFillInitial() {
   let guard = cols * rows * 2;
@@ -185,24 +233,24 @@ function fastFillInitial() {
   }
 }
 
-/* ===== 通常ループ ===== */
+/* =========================
+ * 通常ループ
+ * ========================= */
 
 function tick() {
   tickOnce();
 }
 
-/* ===== 起動 ===== */
+/* =========================
+ * 起動処理
+ * ========================= */
 
 async function start() {
   const res = await fetch("../words.json");
   wordData = await res.json();
 
   initGrid();
-
-  // 初期のみ高速で全画面充填
   fastFillInitial();
-
-  // 通常速度に移行
   setInterval(tick, TICK);
 }
 
