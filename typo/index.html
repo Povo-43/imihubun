@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>意味不短文 可変文字グリッド</title>
+<title>タイポグラフィ / 意味不短文ジェネレータード</title>
+<meta property="og:title" content="タイポグラフィ / 意味不文ジェネレーター">
+<meta property="og:description" content="意味不明なタイポグラフィを表示するサイト">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://povo-43.github.io/imihubun/typo/index.html">
+<meta property="og:image" content="https://povo-43.github.io/imihubun/typo/ogp.png">
+
+<meta name="twitter:card" content="summary_large_image">
 
 <style>
 html, body {
@@ -56,6 +63,9 @@ html, body {
   color: #e8e6df;
   border: 1px solid #333;
 }
+#overlay button:hover{
+  box-shadow: #555 0px 0px 8px;
+}
 </style>
 </head>
 
@@ -64,11 +74,16 @@ html, body {
 
 <div id="overlay" hidden>
   <div class="menu">
+    <h1 style="margin: 0;">Typography</h1>
+    <p style="margin: 0;">意味不文ジェネレーター</p>
     <h2>Menu</h2>
     <button id="resume">再開</button>
     <button id="reset">リセット</button>
+    <button id="save">保存</button>
+    <button id="shere">このページを共有</button>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <script>
 /* =========================
@@ -77,7 +92,7 @@ html, body {
 
 const CELL = 16;
 const SIZES = [1, 1, 2, 2, 4, 4, 8];
-const LIFETIME = 8000;
+const LIFETIME = 7000;
 const TICK = 10;
 
 /* =========================
@@ -88,6 +103,7 @@ const stage = document.getElementById("stage");
 const overlay = document.getElementById("overlay");
 const resumeBtn = document.getElementById("resume");
 const resetBtn = document.getElementById("reset");
+const shareBtn = document.getElementById("share");
 
 /* =========================
  * 状態
@@ -310,6 +326,64 @@ resetBtn.addEventListener("click", e => {
 addEventListener("resize", () => {
   initGrid();
   fastFillInitial();
+});
+
+let saving = false;
+
+document.getElementById("save").addEventListener("click", async e => {
+  if (saving) return;
+  saving = true;
+  document.getElementById("save").style.backgroundColor = "#555";
+  try {
+    const canvas = await html2canvas(stage);
+
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `意味不文ジェネレーター_${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(url);
+      saving = false;
+    });
+  document.getElementById("save").style.backgroundColor = "#1a1d26";
+  } catch (err) {
+    saving = false;
+    console.error(err);
+  document.getElementById("save").style.backgroundColor = "#1a1d26";
+  }
+  document.getElementById("save").style.backgroundColor = "#1a1d26";
+});
+
+shareBtn.addEventListener("click", e => {
+  e.stopPropagation();
+
+  const url = location.href;
+  const text = "意味不明短文ジェネレーター";
+
+  if (navigator.share) {
+    navigator.share({
+      title: document.title,
+      text,
+      url
+    }).catch(() => {
+      // ユーザーキャンセルは何もしない
+    });
+  } else {
+    // X フォールバック
+    const xUrl =
+      "https://twitter.com/intent/tweet?" +
+      new URLSearchParams({
+        text,
+        url
+      }).toString();
+
+    window.open(xUrl, "_blank", "noopener");
+  }
 });
 
 /* =========================
