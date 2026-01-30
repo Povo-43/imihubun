@@ -38,10 +38,11 @@ html, body {
   inset: 0;
   background: rgba(11, 13, 18, 0.85);
   backdrop-filter: blur(4px);
-  display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+
+  display: none;
 }
 
 #overlay .menu {
@@ -75,19 +76,42 @@ html, body {
  * ========================= */
 
 const CELL = 16;
-const SIZES = [1, 2, 4, 8];
+const SIZES = [1, 1, 2, 2, 4, 4, 8];
 const LIFETIME = 8000;
 const TICK = 10;
 
+/* =========================
+ * DOM
+ * ========================= */
+
 const stage = document.getElementById("stage");
+const overlay = document.getElementById("overlay");
+const resumeBtn = document.getElementById("resume");
+const resetBtn = document.getElementById("reset");
 
 /* =========================
- * グリッド管理
+ * 状態
  * ========================= */
 
 let cols = 0;
 let rows = 0;
 let grid = [];
+
+let wordData = null;
+let charQueue = [];
+
+let running = true;
+let timerId = null;
+
+/* =========================
+ * ユーティリティ
+ * ========================= */
+
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+/* =========================
+ * グリッド管理
+ * ========================= */
 
 function initGrid() {
   cols = Math.floor(innerWidth / CELL);
@@ -98,7 +122,6 @@ function initGrid() {
 
 function canPlace(x, y, size) {
   if (x + size > cols || y + size > rows) return false;
-
   for (let dy = 0; dy < size; dy++) {
     for (let dx = 0; dx < size; dx++) {
       if (grid[y + dy][x + dx]) return false;
@@ -136,11 +159,6 @@ function hasEmptyCell() {
  * 単語生成
  * ========================= */
 
-let wordData = null;
-let charQueue = [];
-
-const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-
 function renderStructure(template) {
   return template.replace(/\{(\w+)\}/g, (_, key) => {
     const pool = wordData[key + "s"] || wordData[key];
@@ -149,11 +167,10 @@ function renderStructure(template) {
 }
 
 function generateSentence() {
-  const base = renderStructure(pick(wordData.structures));
-  if (Math.random() < 0.5) {
-    return base + " " + renderStructure(pick(wordData.structures));
-  }
-  return base;
+  const s = renderStructure(pick(wordData.structures));
+  return Math.random() < 0.5
+    ? s + " " + renderStructure(pick(wordData.structures))
+    : s;
 }
 
 function refillCharQueue() {
@@ -164,13 +181,12 @@ function refillCharQueue() {
  * 文字生成
  * ========================= */
 
-function createCharElement(ch, gx, gy, size) {
+function createChar(ch, gx, gy, size) {
   const el = document.createElement("div");
   el.className = "char";
   el.textContent = ch;
 
   const px = size * CELL;
-
   el.style.width = px + "px";
   el.style.height = px + "px";
   el.style.left = gx * CELL + "px";
@@ -212,7 +228,7 @@ function tickOnce() {
       const sizes = [...SIZES].sort(() => Math.random() - 0.5);
       for (const size of sizes) {
         if (canPlace(x, y, size)) {
-          createCharElement(ch, x, y, size);
+          createChar(ch, x, y, size);
           return true;
         }
       }
@@ -234,15 +250,70 @@ function fastFillInitial() {
 }
 
 /* =========================
- * 通常ループ
+ * ループ制御
  * ========================= */
 
 function tick() {
+  if (!running) return;
   tickOnce();
 }
 
+function startLoop() {
+  if (timerId) clearInterval(timerId);
+  timerId = setInterval(tick, TICK);
+}
+
 /* =========================
- * 起動処理
+ * UI制御
+ * ========================= */
+
+function pause() {
+  running = false;
+  overlay.hidden = false;
+}
+
+function resume() {
+  overlay.hidden = true;
+  running = true;
+}
+
+function resetAll() {
+  running = false;
+  initGrid();
+  charQueue.length = 0;
+  fastFillInitial();
+  running = true;
+  overlay.hidden = true;
+}
+
+/* =========================
+ * イベント
+ * ========================= */
+
+stage.addEventListener("click", () => {
+  if (running) pause();
+  overlay.style.display = "flex";
+  console.log("aaa");
+});
+
+
+resumeBtn.addEventListener("click", e => {
+  e.stopPropagation();
+  resume();
+  overlay.style.display = "none";
+});
+resetBtn.addEventListener("click", e => {
+  e.stopPropagation();
+  resetAll();
+});
+
+addEventListener("resize", () => {
+  initGrid();
+  fastFillInitial();
+});
+
+/* =========================
+ * 起動
  * ========================= */
 
 async function start() {
@@ -251,12 +322,15 @@ async function start() {
 
   initGrid();
   fastFillInitial();
-  setInterval(tick, TICK);
+  startLoop();
 }
 
-addEventListener("resize", initGrid);
 start();
-
 </script>
+
+<!--
+<script src="//cdn.jsdelivr.net/npm/eruda">
+</script><script>eruda.init();</script>-->
+
 </body>
 </html>
