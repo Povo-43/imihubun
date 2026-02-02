@@ -37,7 +37,13 @@ html, body {
   justify-content: center;
   line-height: 1;
   user-select: none;
-  transition: opacity 0.4s linear;
+  transition: opacity 0.4s linear, transform 0.2s ease;  
+  cursor: pointer;
+}
+  
+.char:hover {  
+  transform: scale(1.5);  
+  z-index: 10;  
 }
 
 #overlay {
