@@ -418,6 +418,12 @@ addEventListener("resize", () => {
   fastFillInitial();
 });
 
+overlay.addEventListener("click", e => {
+  e.stopPropagation();
+  resume();
+  overlay.style.display = "none";
+});
+
 let saving = false;
 
 document.getElementById("save").addEventListener("click", async e => {
