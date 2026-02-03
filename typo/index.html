@@ -72,6 +72,36 @@ html, body {
 #overlay button:hover{
   box-shadow: #555 0px 0px 8px;
 }
+  :root {  
+  --bg: #0b0d12;  
+  --fg: #e8e6df;  
+  --btn-bg: #0000006d;  
+  --btn-border: #333;  
+  --btn-hover: #555;  
+}  
+[data-theme="light"] {  
+  --bg: #ffffff;  
+  --fg: #000000;  
+  --btn-bg: #f0f0f0;  
+  --btn-border: #999;  
+  --btn-hover: #777;  
+}  
+html, body {  
+  margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;  
+  background: var(--bg);  
+  color: var(--fg);  
+  font-family: 'Shippori Mincho', 'Noto Serif JP', serif;  
+}  
+#overlay button {  
+  margin: 8px; padding: 6px 14px;  
+  background: var(--btn-bg);  
+  color: var(--fg);  
+  border: 1px solid var(--btn-border);  
+}  
+#overlay button:hover {  
+  box-shadow: var(--btn-hover) 0px 0px 8px;  
+}
+
 </style>
 </head>
 
@@ -85,6 +115,7 @@ html, body {
     <h2>Menu</h2>
     <button id="resume">再開</button>
     <button id="reset">リセット</button>
+    <button id="toggle-theme">テーマ切替</button>
     <button id="save">保存</button>
     <button id="share">このページを共有</button>
   </div>
@@ -428,6 +459,18 @@ overlay.addEventListener("click", e => {
   e.stopPropagation();
   resume();
   overlay.style.display = "none";
+});
+
+function toggleTheme() {  
+  const current = document.documentElement.getAttribute("data-theme");  
+  document.documentElement.setAttribute(  
+    "data-theme",  
+    current === "light" ? "dark" : "light"  
+  );  
+}  
+document.getElementById("toggle-theme").addEventListener("click", e => {  
+  e.stopPropagation();  
+  toggleTheme();  
 });
 
 let saving = false;
